@@ -60,16 +60,32 @@ public class QuizActivity extends AppCompatActivity {
     private QuizTopic topic;
     private MLRemoteTranslator mlRemoteTranslator;
 
-    private void translateFunction(final String question){
+    private void translateFunction(final String inputText, int mode){
         MLApplication.getInstance().setApiKey("DAEDAJiRoKJfPgvYBb7xCfXNgjYi6h6UQssss/pYf/z4H4yS7jFiYh8IAbHdZrgCx9o/AEw/seFVjkkfh2Bx7RWGLNoBqMOGzRnSuQ==");
         MLRemoteTranslateSetting setting = new MLRemoteTranslateSetting
                 .Factory().setSourceLangCode("en")
                 .setTargetLangCode("id")
                 .create();
         mlRemoteTranslator = MLTranslatorFactory.getInstance().getRemoteTranslator(setting);
-        final Task<String> task = mlRemoteTranslator.asyncTranslate(question);
+        final Task<String> task = mlRemoteTranslator.asyncTranslate(inputText);
         task.addOnSuccessListener((text) -> {
-            binding.tvQuestion.setText(text);
+
+            if (mode == 1) {
+                binding.tvQuestion.setText(text);
+            }else if(mode == 2){
+                binding.tvAnswerA.setText(text);
+            }else if(mode == 3){
+                binding.tvAnswerB.setText(text);
+            }else if(mode == 4){
+                binding.tvAnswerC.setText(text);
+            }else if(mode == 5){
+                binding.tvAnswerD.setText(text);
+            }else if(mode == 6){
+                binding.tvAnswerE.setText(text);
+            }else if(mode == 7){
+                binding.tvAnswerF.setText(text);
+            }
+
         }).addOnFailureListener((e) ->{
             try {
                 MLException mlException = (MLException)e;
@@ -130,29 +146,29 @@ public class QuizActivity extends AppCompatActivity {
         int res = (rnd.nextInt(1000) % questions.size());
         currentQuestion = questions.get(res);
 
-        translateFunction(currentQuestion.getQuestion());
+        translateFunction(currentQuestion.getQuestion(), 1);
         if (currentQuestion.getAnswers().getAnswer_a() != null)
-            binding.tvAnswerA.setText(currentQuestion.getAnswers().getAnswer_a());
+            translateFunction(currentQuestion.getAnswers().getAnswer_a(), 2);
         else
             binding.cvAnswerA.setVisibility(View.GONE);
         if (currentQuestion.getAnswers().getAnswer_b() != null)
-            binding.tvAnswerB.setText(currentQuestion.getAnswers().getAnswer_b());
+            translateFunction(currentQuestion.getAnswers().getAnswer_b(), 3);
         else
             binding.cvAnswerB.setVisibility(View.GONE);
         if (currentQuestion.getAnswers().getAnswer_c() != null)
-            binding.tvAnswerC.setText(currentQuestion.getAnswers().getAnswer_c());
+            translateFunction(currentQuestion.getAnswers().getAnswer_c(), 4);
         else
             binding.cvAnswerC.setVisibility(View.GONE);
         if (currentQuestion.getAnswers().getAnswer_d() != null)
-            binding.tvAnswerD.setText(currentQuestion.getAnswers().getAnswer_d());
+            translateFunction(currentQuestion.getAnswers().getAnswer_d(), 5);
         else
             binding.cvAnswerD.setVisibility(View.GONE);
         if (currentQuestion.getAnswers().getAnswer_e() != null)
-            binding.tvAnswerE.setText(currentQuestion.getAnswers().getAnswer_e());
+            translateFunction(currentQuestion.getAnswers().getAnswer_e(), 6);
         else
             binding.cvAnswerE.setVisibility(View.GONE);
         if (currentQuestion.getAnswers().getAnswer_f() != null)
-            binding.tvAnswerF.setText(currentQuestion.getAnswers().getAnswer_f());
+            translateFunction(currentQuestion.getAnswers().getAnswer_f(), 7);
         else
             binding.cvAnswerF.setVisibility(View.GONE);
     }

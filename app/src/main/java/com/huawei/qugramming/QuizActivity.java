@@ -3,12 +3,27 @@ package com.huawei.qugramming;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 
+import com.huawei.hmf.tasks.Task;
+import com.huawei.hms.api.bean.HwAudioPlayItem;
+import com.huawei.hms.audiokit.player.callback.HwAudioConfigCallBack;
+import com.huawei.hms.audiokit.player.manager.HwAudioConfigManager;
+import com.huawei.hms.audiokit.player.manager.HwAudioManager;
+import com.huawei.hms.audiokit.player.manager.HwAudioManagerFactory;
+import com.huawei.hms.audiokit.player.manager.HwAudioPlayerConfig;
+import com.huawei.hms.audiokit.player.manager.HwAudioPlayerManager;
+import com.huawei.hms.audiokit.player.manager.HwAudioQueueManager;
+import com.huawei.hms.mlsdk.common.MLApplication;
+import com.huawei.hms.mlsdk.common.MLException;
+import com.huawei.hms.mlsdk.translate.MLTranslatorFactory;
+import com.huawei.hms.mlsdk.translate.cloud.MLRemoteTranslateSetting;
+import com.huawei.hms.mlsdk.translate.cloud.MLRemoteTranslator;
 import com.huawei.qugramming.api.ApiInterface;
 import com.huawei.qugramming.databinding.ActivityQuizBinding;
 import com.huawei.qugramming.model.AnswerOption;
@@ -43,6 +58,33 @@ public class QuizActivity extends AppCompatActivity {
     private Question currentQuestion;
     private AnswerOption selectedAnswer;
     private QuizTopic topic;
+    private MLRemoteTranslator mlRemoteTranslator;
+
+    private void translateFunction(final String question){
+        MLApplication.getInstance().setApiKey("DAEDAJiRoKJfPgvYBb7xCfXNgjYi6h6UQssss/pYf/z4H4yS7jFiYh8IAbHdZrgCx9o/AEw/seFVjkkfh2Bx7RWGLNoBqMOGzRnSuQ==");
+        MLRemoteTranslateSetting setting = new MLRemoteTranslateSetting
+                .Factory().setSourceLangCode("en")
+                .setTargetLangCode("id")
+                .create();
+        mlRemoteTranslator = MLTranslatorFactory.getInstance().getRemoteTranslator(setting);
+        final Task<String> task = mlRemoteTranslator.asyncTranslate(question);
+        task.addOnSuccessListener((text) -> {
+            binding.tvQuestion.setText(text);
+        }).addOnFailureListener((e) ->{
+            try {
+                MLException mlException = (MLException)e;
+                // Obtain the result code. You can process the result code and customize respective messages displayed to users.
+                int errorCode = mlException.getErrCode();
+                // Obtain the error information. You can quickly locate the fault based on the result code.
+                String errorMessage = mlException.getMessage();
+            } catch (Exception error) {
+                // Handle the conversion error.
+            }
+        });
+        if (mlRemoteTranslator!= null) {
+            mlRemoteTranslator.stop();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +95,7 @@ public class QuizActivity extends AppCompatActivity {
         setOnClickListener();
     }
 
-    private void initFinalVariables(){
+    private void initFinalVariables() {
         binding = DataBindingUtil.setContentView(QuizActivity.this, R.layout.activity_quiz);
         topic = (QuizTopic) getIntent().getSerializableExtra("selectedTopic");
         minutes = 1;
@@ -66,9 +108,9 @@ public class QuizActivity extends AppCompatActivity {
         getQuestionsList();
     }
 
-    private void setViewValues(){
+    private void setViewValues() {
         binding.tvSelectedTopic.setText(topic.name());
-        binding.tvProgress.setText((currentQuestionPosition+1) + "/" + NUMBER_OF_QUESTIONS);
+        binding.tvProgress.setText((currentQuestionPosition + 1) + "/" + NUMBER_OF_QUESTIONS);
         binding.cvAnswerA.setVisibility(View.VISIBLE);
         binding.cvAnswerA.setCardBackgroundColor(Color.WHITE);
         binding.cvAnswerB.setVisibility(View.VISIBLE);
@@ -88,41 +130,41 @@ public class QuizActivity extends AppCompatActivity {
         int res = (rnd.nextInt(1000) % questions.size());
         currentQuestion = questions.get(res);
 
-        binding.tvQuestion.setText(currentQuestion.getQuestion());
-        if(currentQuestion.getAnswers().getAnswer_a() != null)
+        translateFunction(currentQuestion.getQuestion());
+        if (currentQuestion.getAnswers().getAnswer_a() != null)
             binding.tvAnswerA.setText(currentQuestion.getAnswers().getAnswer_a());
         else
             binding.cvAnswerA.setVisibility(View.GONE);
-        if(currentQuestion.getAnswers().getAnswer_b() != null)
+        if (currentQuestion.getAnswers().getAnswer_b() != null)
             binding.tvAnswerB.setText(currentQuestion.getAnswers().getAnswer_b());
         else
             binding.cvAnswerB.setVisibility(View.GONE);
-        if(currentQuestion.getAnswers().getAnswer_c() != null)
+        if (currentQuestion.getAnswers().getAnswer_c() != null)
             binding.tvAnswerC.setText(currentQuestion.getAnswers().getAnswer_c());
         else
             binding.cvAnswerC.setVisibility(View.GONE);
-        if(currentQuestion.getAnswers().getAnswer_d() != null)
+        if (currentQuestion.getAnswers().getAnswer_d() != null)
             binding.tvAnswerD.setText(currentQuestion.getAnswers().getAnswer_d());
         else
             binding.cvAnswerD.setVisibility(View.GONE);
-        if(currentQuestion.getAnswers().getAnswer_e() != null)
+        if (currentQuestion.getAnswers().getAnswer_e() != null)
             binding.tvAnswerE.setText(currentQuestion.getAnswers().getAnswer_e());
         else
             binding.cvAnswerE.setVisibility(View.GONE);
-        if(currentQuestion.getAnswers().getAnswer_f() != null)
+        if (currentQuestion.getAnswers().getAnswer_f() != null)
             binding.tvAnswerF.setText(currentQuestion.getAnswers().getAnswer_f());
         else
             binding.cvAnswerF.setVisibility(View.GONE);
     }
 
-    private void changeNextQuestion(){
+    private void changeNextQuestion() {
         ++currentQuestionPosition;
         selectedAnswer = null;
 
-        if((currentQuestionPosition+1) == NUMBER_OF_QUESTIONS){
+        if ((currentQuestionPosition + 1) == NUMBER_OF_QUESTIONS) {
             binding.btnNextQuestion.setText("Submit Quiz");
         }
-        if(currentQuestionPosition == NUMBER_OF_QUESTIONS){
+        if (currentQuestionPosition == NUMBER_OF_QUESTIONS) {
             gotoQuizResult();
             return;
         }
@@ -224,9 +266,9 @@ public class QuizActivity extends AppCompatActivity {
         binding.btnNextQuestion.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(selectedAnswer == null)
+                if (selectedAnswer == null)
                     Toast.makeText(QuizActivity.this, "Please choose an Answer", Toast.LENGTH_SHORT).show();
-                else{
+                else {
                     answers.add(new UserAnswer(currentQuestion, selectedAnswer));
                     changeNextQuestion();
                 }
@@ -234,23 +276,23 @@ public class QuizActivity extends AppCompatActivity {
         });
     }
 
-    private void startTimer(){
+    private void startTimer() {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if(seconds == 0 && minutes == 0){
+                if (seconds == 0 && minutes == 0) {
                     timer.purge();
                     timer.cancel();
-                }else if(seconds == 0){
+                } else if (seconds == 0) {
                     --minutes;
                     seconds = 59;
-                }else
+                } else
                     --seconds;
 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if(seconds == 0 && minutes == 0){
+                        if (seconds == 0 && minutes == 0) {
                             Toast.makeText(QuizActivity.this, "Time's Up!", Toast.LENGTH_SHORT).show();
                             gotoQuizResult();
                         }
@@ -258,11 +300,11 @@ public class QuizActivity extends AppCompatActivity {
                         String fMinutes = String.valueOf(minutes);
                         String fSeconds = String.valueOf(seconds);
 
-                        if(fMinutes.length() == 1)
-                            fMinutes = "0"+fMinutes;
+                        if (fMinutes.length() == 1)
+                            fMinutes = "0" + fMinutes;
 
-                        if(fSeconds.length() == 1)
-                            fSeconds = "0"+fSeconds;
+                        if (fSeconds.length() == 1)
+                            fSeconds = "0" + fSeconds;
 
                         binding.tvTimer.setText(fMinutes + ":" + fSeconds);
                     }
@@ -271,17 +313,17 @@ public class QuizActivity extends AppCompatActivity {
         }, 1000, 1000);
     }
 
-    private int getCorrectAnswer(){
+    private int getCorrectAnswer() {
         int correctAnswers = 0;
 
-        for(UserAnswer ans : answers)
-             if(ans.isAnswerCorrect())
-                 ++correctAnswers;
+        for (UserAnswer ans : answers)
+            if (ans.isAnswerCorrect())
+                ++correctAnswers;
 
         return correctAnswers;
     }
 
-    private void getQuestionsList(){
+    private void getQuestionsList() {
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://quizapi.io/api/v1/")
                 .addConverterFactory(GsonConverterFactory.create())
@@ -296,7 +338,7 @@ public class QuizActivity extends AppCompatActivity {
         listCall.enqueue(new Callback<List<Question>>() {
             @Override
             public void onResponse(Call<List<Question>> call, Response<List<Question>> response) {
-                if(!response.isSuccessful()){
+                if (!response.isSuccessful()) {
                     Toast.makeText(QuizActivity.this, "Error : " + response.code(), Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -313,7 +355,7 @@ public class QuizActivity extends AppCompatActivity {
         });
     }
 
-    private void gotoQuizResult(){
+    private void gotoQuizResult() {
         timer.purge();
         timer.cancel();
         Intent intent = new Intent(QuizActivity.this, QuizResultActivity.class);
@@ -322,7 +364,7 @@ public class QuizActivity extends AppCompatActivity {
         finish();
     }
 
-    private void backToMain(){
+    private void backToMain() {
         timer.purge();
         timer.cancel();
 

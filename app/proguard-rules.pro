@@ -33,3 +33,7 @@
 -keep interface com.huawei.hms.ads.** {*; }
 
 
+
+
+
+-keepattributes SourceFile,LineNumberTable
